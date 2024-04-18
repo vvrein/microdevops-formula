@@ -1,0 +1,51 @@
+
+vmserver:
+  <vm_name>:
+    nginx:
+      enabled: True
+      separate_config: True
+      auth_basic:
+        - username: user1
+          password: password1
+      servers:
+        - names:
+            - vm.tsdb.example.com
+          acme_account: example_com
+          #ssl_key: /etc/ssl/private/ssl-cert-snakeoil.key
+          #ssl_cert: /etc/ssl/certs/ssl-cert-snakeoil.pem
+    binary:
+      link: https://...
+    config: # https://docs.victoriametrics.com/single-server-victoriametrics/#list-of-command-line-flags
+      httpListenAddr: 127.0.0.1:8428 # required, used in nginx config
+      storageDataPath: /var/lib/victoriametrics/<vm_name> # optional, default 
+      retentionPeriod: 1y # optional, default 
+    files: {}
+      
+vmagent: # https://docs.victoriametrics.com/vmagent/#features
+  <vm_name>:
+    binary:
+      link: https://...
+    config: # https://docs.victoriametrics.com/vmagent/#advanced-usage
+      remoteWrite.url: https://vm.tsdb.example.com/api/v1/write
+      remoteWrite.basicAuth.username: user1 
+      remoteWrite.basicAuth.password: password1
+      promscrape.config: /etc/victoriametrics/promscrape.yaml
+    files:
+      managed:
+        promscrape:
+          - name: /etc/victoriametrics/promscrape.yaml
+            contents: |
+              global:
+                scrape_interval: 15s
+                scrape_timeout: 10s
+              
+              - job_name: nsq
+                honor_timestamps: true
+                scrape_interval: 10s
+                scrape_timeout: 10s
+                metrics_path: /metrics
+                scheme: http
+                follow_redirects: true
+                static_configs:
+                - targets:
+                  - nsq1.prd.example.com:9273
