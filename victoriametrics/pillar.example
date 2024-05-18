@@ -3,7 +3,6 @@ vmserver:
   <vm_name>:
     nginx:
       enabled: True
-      separate_config: True
       auth_basic:
         - username: user1
           password: password1
@@ -13,19 +12,28 @@ vmserver:
           acme_account: example_com
           #ssl_key: /etc/ssl/private/ssl-cert-snakeoil.key
           #ssl_cert: /etc/ssl/certs/ssl-cert-snakeoil.pem
-    binary:
-      link: https://...
-    config: # https://docs.victoriametrics.com/single-server-victoriametrics/#list-of-command-line-flags
-      httpListenAddr: 127.0.0.1:8428 # required, used in nginx config
-      storageDataPath: /var/lib/victoriametrics/<vm_name> # optional, default 
-      retentionPeriod: 1y # optional, default 
+    service:
+      target: /usr/local/bin/victoriametrics # optional, default, path for binary file installation
+      # get from github
+      platform: github # required
+      version: v1.100.0 # required, only works with "platform: github"
+      # or get from link
+      source: # required, URI of victoriametrics archive
+      source_hash: # optional, a source hash string or the URI of a file that contains source hash strings
+
+    args: # https://docs.victoriametrics.com/single-server-victoriametrics/#list-of-command-line-flags
+      httpListenAddr: 0.0.0.0:8428 # optional, default
+      storageDataPath: /var/lib/victoriametrics/__VM_NAME__ # optional, default 
+      retentionPeriod: 1 # If suffix isn't set, then the duration is counted in months (default 1)
+                         # following optional suffixes are supported: s (second), m (minute), h (hour), d (day), w (week), y (year)
     files: {}
       
 vmagent: # https://docs.victoriametrics.com/vmagent/#features
   <vm_name>:
     binary:
-      link: https://...
-    config: # https://docs.victoriametrics.com/vmagent/#advanced-usage
+    source: https://...
+    target: /usr/local/bin
+    args: # https://docs.victoriametrics.com/vmagent/#advanced-usage
       remoteWrite.url: https://vm.tsdb.example.com/api/v1/write
       remoteWrite.basicAuth.username: user1 
       remoteWrite.basicAuth.password: password1

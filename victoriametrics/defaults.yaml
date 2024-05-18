@@ -1,0 +1,14 @@
+salt_cache_dir: /var/cache/salt/VictoriaMetrics
+
+service:
+  target: /usr/local/bin/victoriametrics
+
+args:
+  httpListenAddr: 0.0.0.0:8428
+  storageDataPath: /var/lib/victoriametrics/{vm_name}
+  retentionPeriod: 1
+
+platforms:
+  github:
+    source: https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/{release}/victoria-metrics-linux-{arch}-{release}.tar.gz
+    source_hash: https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/{release}/victoria-metrics-linux-{arch}-{release}_checksums.txt
