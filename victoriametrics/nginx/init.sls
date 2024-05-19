@@ -4,56 +4,59 @@
 {%- set cert_prefix = "victoriametrics" %}
 {%- set template = "vhost.jinja" %}
 
-vmserver_{{ vm_name }}_nginx_install:
+victoriametrics_{{ vm_name }}_nginx_install:
   pkg.installed:
     - pkgs:
       - nginx
       - apache2-utils
 
-vmserver_{{ vm_name }}_htpasswd_dir:
+victoriametrics_{{ vm_name }}_htpasswd_dir:
   file.directory:
     - name: /etc/nginx/htpasswd
 
-  {%- for auth in vm_content["nginx"].get("auth_basic",[]) %}
-vmserver_{{ vm_name }}_basic_auth_{{ auth["username"] }}:
+  {%- for auth in vm_data["nginx"].get("auth_basic",[]) %}
+victoriametrics_{{ vm_name }}_basic_auth_{{ auth["username"] }}:
   webutil.user_exists:
     - name: {{ auth["username"] }}
     - password: {{ auth["password"] }}
-    - htpasswd_file: {{ "/etc/nginx/htpasswd/victoriametrics_" ~ vm_name }}
+    - htpasswd_file: /etc/nginx/htpasswd/{{ service_name }}
     - force: true
   {%- endfor %}
 
-  {% for server in vm_content["nginx"]["servers"] if "acme_account" in server.keys() %}
+  {% for server in vm_data["nginx"]["servers"] if "acme_account" in server.keys() %}
 
     {{ verify_and_issue(server["acme_account"], cert_prefix, server["names"]) }}
 
   {%- endfor %}
 
-vmserver_{{ vm_name }}_nginx_files_1:
+victoriametrics_{{ vm_name }}_nginx_files_1:
   file.managed:
-    - name: {{ "/etc/nginx/sites-available/victoriametrics-" ~ vm_name ~ ".conf" }}
-    - source: salt://loki/nginx/{{ template }}
+    - name: /etc/nginx/sites-available/{{ service_name }}.conf
+    - source: salt://victoriametrics/nginx/{{ template }}
     - template: jinja
     - context:
         cert_prefix: {{ cert_prefix }}
         vm_name: {{ vm_name }}
-        vm_content: {{ vm_content }}
+        vm_data: {{ vm_data }}
+        service_name: {{ service_name }}
 
-vmserver_{{ vm_name }}_nginx_files_symlink_1:
+victoriametrics_{{ vm_name }}_nginx_files_symlink_1:
   file.symlink:
-    - name: {{ "/etc/nginx/sites-enabled/victoriametrics-" ~ vm_name ~ ".conf" }}
-    - target: {{ "/etc/nginx/sites-available/victoriametrics-" ~ vm_name ~ ".conf" }}
+    - name: /etc/nginx/sites-enabled/{{ service_name }}.conf
+    - target: /etc/nginx/sites-available/{{ service_name }}.conf
 
-vmserver_{{ vm_name }}_nginx_files_2:
+victoriametrics_{{ vm_name }}_nginx_files_2:
   file.absent:
     - name: /etc/nginx/sites-enabled/default
 
-vmserver_{{ vm_name }}_nginx_reload:
+victoriametrics_{{ vm_name }}_nginx_reload:
   cmd.run:
     - runas: root
-    - name: service nginx configtest && service nginx reload
+    - name: nginx -t && nginx -s reload
+    - watch:
+      - file: /etc/nginx/sites-available/{{ service_name }}.conf
 
-vmserver_{{ vm_name }}_nginx_reload_cron:
+victoriametrics_{{ vm_name }}_nginx_reload_cron:
   cron.present:
     - name: /usr/sbin/service nginx configtest && /usr/sbin/service nginx reload
     - identifier: nginx_reload

@@ -10,8 +10,8 @@ server {
     }
 }
 
-upstream victoriametrics-{{ vm_name }} {
-    server 127.0.0.1:{{ vm_data["args"]["httpListenAddr"].split(":")[-1] }};
+upstream {{ service_name }} {
+    server {{ vm_data["args"]["httpListenAddr"] }};
     keepalive 10;
 }
 
@@ -27,22 +27,22 @@ server {
     ssl_certificate_key {{ server["ssl_key"] }};
     {%- endif %}
     
-    {%- if "auth_basic" in loki_data["nginx"] %}
+    {%- if "auth_basic" in vm_data["nginx"] %}
     auth_basic "Administrator’s Area";
-    auth_basic_user_file {{ "/etc/nginx/victoriametrics/htpasswd_" ~ loki_name }};
+    auth_basic_user_file /etc/nginx/htpasswd/{{ service_name }};
     {%- endif %}
 
     root /dev/null;
     charset UTF-8;
     autoindex off;
 
-    access_log /var/log/nginx/victoriametrics-{{ vm_name }}.access.log;
-    error_log /var/log/nginx/victoriametrics-{{ vm_name }}.error.log;
+    access_log /var/log/nginx/{{ service_name }}.access.log;
+    error_log /var/log/nginx/{{ service_name }}.error.log;
 
     client_max_body_size 25m;
 
     location / {
-        proxy_pass http://victoriametrics-{{ vm_name }};
+        proxy_pass http://{{ service_name }};
         proxy_set_header       Host             $host;
         proxy_set_header       X-Real-IP        $remote_addr;
         proxy_set_header       X-Forwarded-For  $proxy_add_x_forwarded_for;
@@ -50,8 +50,5 @@ server {
         proxy_read_timeout     240;
         proxy_connect_timeout  240;
     }
-
-
-
 }
 {% endfor %}
