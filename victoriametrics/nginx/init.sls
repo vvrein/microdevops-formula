@@ -1,21 +1,21 @@
 
 {% from "acme/macros.jinja" import verify_and_issue %}
 
-{%- set cert_prefix = "victoriametrics" %}
+{%- set cert_prefix = "vmserver" %}
 {%- set template = "vhost.jinja" %}
 
-victoriametrics_{{ vm_name }}_nginx_install:
+{{ kind }}_{{ vm_name }}_nginx_install:
   pkg.installed:
     - pkgs:
       - nginx
       - apache2-utils
 
-victoriametrics_{{ vm_name }}_htpasswd_dir:
+{{ kind }}_{{ vm_name }}_htpasswd_dir:
   file.directory:
     - name: /etc/nginx/htpasswd
 
   {%- for auth in vm_data["nginx"].get("auth_basic",[]) %}
-victoriametrics_{{ vm_name }}_basic_auth_{{ auth["username"] }}:
+{{ kind }}_{{ vm_name }}_basic_auth_{{ auth["username"] }}:
   webutil.user_exists:
     - name: {{ auth["username"] }}
     - password: {{ auth["password"] }}
@@ -29,7 +29,7 @@ victoriametrics_{{ vm_name }}_basic_auth_{{ auth["username"] }}:
 
   {%- endfor %}
 
-victoriametrics_{{ vm_name }}_nginx_files_1:
+{{ kind }}_{{ vm_name }}_nginx_files_1:
   file.managed:
     - name: /etc/nginx/sites-available/{{ service_name }}.conf
     - source: salt://victoriametrics/nginx/{{ template }}
@@ -40,23 +40,23 @@ victoriametrics_{{ vm_name }}_nginx_files_1:
         vm_data: {{ vm_data }}
         service_name: {{ service_name }}
 
-victoriametrics_{{ vm_name }}_nginx_files_symlink_1:
+{{ kind }}_{{ vm_name }}_nginx_files_symlink_1:
   file.symlink:
     - name: /etc/nginx/sites-enabled/{{ service_name }}.conf
     - target: /etc/nginx/sites-available/{{ service_name }}.conf
 
-victoriametrics_{{ vm_name }}_nginx_files_2:
+{{ kind }}_{{ vm_name }}_nginx_files_2:
   file.absent:
     - name: /etc/nginx/sites-enabled/default
 
-victoriametrics_{{ vm_name }}_nginx_reload:
+{{ kind }}_{{ vm_name }}_nginx_reload:
   cmd.run:
     - runas: root
     - name: nginx -t && nginx -s reload
     - watch:
       - file: /etc/nginx/sites-available/{{ service_name }}.conf
 
-victoriametrics_{{ vm_name }}_nginx_reload_cron:
+{{ kind }}_{{ vm_name }}_nginx_reload_cron:
   cron.present:
     - name: /usr/sbin/service nginx configtest && /usr/sbin/service nginx reload
     - identifier: nginx_reload

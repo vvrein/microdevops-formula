@@ -1,8 +1,7 @@
-
 vmserver:
   <vm_name>:
-    nginx:
-      enabled: True
+    nginx: # optional
+      enabled: True # default
       auth_basic:
         - username: user1
           password: password1
@@ -10,10 +9,11 @@ vmserver:
         - names:
             - vm.tsdb.example.com
           acme_account: example_com
-          #ssl_key: /etc/ssl/private/ssl-cert-snakeoil.key
-          #ssl_cert: /etc/ssl/certs/ssl-cert-snakeoil.pem
+          # or
+          ssl_key: /etc/ssl/private/ssl-cert-snakeoil.key
+          ssl_cert: /etc/ssl/certs/ssl-cert-snakeoil.pem
     service:
-      target: /usr/local/bin/victoriametrics # optional, default, path for binary file installation
+      target: /usr/local/bin # optional, default, path for binary file installation
       # get from github
       platform: github # required
       version: v1.100.0 # required, only works with "platform: github"
@@ -30,9 +30,16 @@ vmserver:
       
 vmagent: # https://docs.victoriametrics.com/vmagent/#features
   <vm_name>:
-    binary:
-    source: https://...
-    target: /usr/local/bin
+    service:
+      vmutils: True
+      vmutils_only: False
+      target: /usr/local/bin # optional, default, path for binary file installation
+      # get from github
+      platform: github # required
+      version: v1.100.0 # required, only works with "platform: github"
+      # or get from link
+      source: # required, URI of victoriametrics archive
+      source_hash: # optional, a source hash string or the URI of a file that contains source hash strings
     args: # https://docs.victoriametrics.com/vmagent/#advanced-usage
       remoteWrite.url: https://vm.tsdb.example.com/api/v1/write
       remoteWrite.basicAuth.username: user1 

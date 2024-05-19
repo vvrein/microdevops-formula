@@ -1,14 +1,25 @@
 salt_cache_dir: /var/cache/salt/VictoriaMetrics
 
-service:
-  target: /usr/local/bin/victoriametrics
-
-args:
-  httpListenAddr: 0.0.0.0:8428
-  storageDataPath: /var/lib/victoriametrics/{vm_name}
-  retentionPeriod: 1
-
 platforms:
   github:
-    source: https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/{release}/victoria-metrics-linux-{arch}-{release}.tar.gz
-    source_hash: https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/{release}/victoria-metrics-linux-{arch}-{release}_checksums.txt
+    source: https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/{release}/{name}-linux-{arch}-{release}.tar.gz
+    source_hash: https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/{release}/{name}-linux-{arch}-{release}_checksums.txt
+
+service:
+  vmagent: 
+    name: vmutils
+    file_name: vmagent
+    target: /usr/local/bin
+    arg_storage: remoteWrite.tmpDataPath
+    args:
+      remoteWrite.tmpDataPath: /var/lib/vmagent/{vm_name}/remotewrite-data
+  
+  vmserver: 
+    name: victoria-metrics
+    file_name: victoria-metrics
+    target: /usr/local/bin
+    arg_storage: storageDataPath
+    args:
+      httpListenAddr: 127.0.0.1:8428
+      storageDataPath: /var/lib/victoriametrics/{vm_name}
+      retentionPeriod: 1
