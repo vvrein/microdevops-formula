@@ -1,0 +1,114 @@
+baseblocks:
+  vmserver:
+    type: fallback
+
+    order: []
+    #  - user
+    #  - install_dir
+    #  - download
+    #  - untar
+    #  - move
+    #  - venv
+    #  - docker_extract
+    #  - service
+
+    defaults:
+      store: github
+      version: latest
+
+    setup:
+      defaults:
+        source: "https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/{tag}/victoria-metrics-{kernel_lower}-{osarch}-{tag}.tar.gz"
+        source_hash: "https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/{tag}/victoria-metrics-{kernel_lower}-{osarch}-{tag}_checksums.txt"
+        install_dir: "/opt/{type}/{name}"
+        file: "{salt_cache_dir}/victoria-metrics-{kernel_lower}-{osarch}-{tag}.tar.gz"
+
+      install_dir:
+      download:
+        #skip: False
+        #source: "{source}"
+        #source_hash: "{source_hash}"
+        #destination: "{file}"
+
+      untar:
+        args: "--transform='s/-prod//;s/victoria-metrics/vmserver/'"
+        unless: 
+          vmserver: '{install_dir}/vmserver --version | grep -q {version}'
+        #skip: False
+        #target: "{install_dir}"
+        #unpack: ""
+        #archive: "{file}"
+
+      move:
+        - src: "{install_dir}/victoria-metrics-prod"
+          dst: "{install_dir}/vmserver"
+
+        - src: "{install_dir}/foo"
+          dst: "{install_dir}/bar"
+
+      venv:
+        #independent: False
+        #skip: False
+        path: "{install_dir}/venv" # default
+        #requirements_txt: <string; templatable> # path to requirements.txt: "{install_dir}/requirements.txt"
+        requirements:
+          - gunicorn==20.1
+
+      docker_extract:
+        #skip: False
+        source: foomo/pagespeed_exporter
+        version: latest
+        #source: "{source}"
+        #version: "{version}"
+        #clean: False
+        #platform:  "{kernel_lower}/{osarch}"
+        #dir: "{install_dir}/output"
+#
+#    service:
+#      #skip: False
+#      template: <string; optional; templatable> # "salt://app/files/{name}/systemd.tmlp"
+#      name: <string; required; templatable> # "{subtype}"
+#      exec: <string; required; templatable> # "{install_dir}/{type}_exporter {args}"
+#      args_keys_prefix: <string; optional> # "-" or "--"
+#      args: <dict; optional; templatable>
+#      environment: <dict; optional templatable>
+#      systemd: <dict; optional>
+#        Unit:
+#          After: defaults.target
+#
+#    pkgs: # todo
+#      skip: False
+#      <package name>: <version or "any" or "latest" or "source">
+#
+#    nginx: # todo
+#      #skip: False
+#      enabled: <bool>
+#      install: <bool>
+#      defaults: <dict> # all servers defaults
+#      server:
+#        - names:
+#            - <string> # domain name
+#          auth_basic:
+#            - username: <string>
+#              password: <string>
+#
+#          ssl_key: <string> # path on the server
+#          ssl_cert: <string> # path on the server
+#          # or
+#          acme_account: <sting> # acme account name
+#
+#          template: <string> # path to jinja file, salt://...
+#          config: <string; templetable> # path to the nginx config file on the server
+#          defaults: <dict> # per server defaults, merge/override all server defaults
+#
+#    user: {} # todo
+#
+#    docker: {} # todo ???
+#
+#    pyenv: {} # todo ???
+#
+#    logrotate: {} # todo
+#
+#    files: # todo
+#      <file manager structure>
+#

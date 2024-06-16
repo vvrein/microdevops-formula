@@ -1,0 +1,14 @@
+[Unit]
+Description="{{ type }}"
+After=network.target
+
+[Service]
+ExecStart="{{ exec }}"
+Type=simple
+Restart=on-failure
+StartLimitBurst=5
+StartLimitInterval=1
+WorkingDirectory="{{ install_dir }}"
+
+[Install]
+WantedBy=multi-user.target

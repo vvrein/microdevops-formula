@@ -1,0 +1,62 @@
+{%- macro _executable(settings, prefix) %}
+{{ "_".join(prefix) }}_executable:
+  file.managed:
+    - name: {{ settings["exec"].split()[0] }}
+    - user: root
+    - group: root
+    - mode: 755
+{%- endmacro %}
+
+{%- macro _service(settings, prefix) %}
+{{ "_".join(prefix) }}_systemd:
+  file.managed:
+    - name: /etc/systemd/system/{{ settings["name"] }}.service
+    - source: {{ settings["template"] }}
+    - template: jinja
+    - context:
+       name: {{ name }}
+       subtype: {{ subtype }}
+       settings: {{ settings }}
+       defaults: {{ defaults["systemd"] }}
+  service.running:
+    - name: {{ settings["name"] }}.service
+    - enable: True
+    - watch:
+      - file: {{ "_".join(prefix) }}_systemd
+{%- endmacro %}
+
+
+{%- macro service_format(settings, defaults, format, shared) %}
+
+  {%- if settings.get("args", False) %}
+    {%- set args = {} %}
+    {%- for k, v in settings["args"].items() %}
+      {%- do args.update({k.format(**format): v.format(**format)}) %}
+    {%- endfor %}
+    {%- do settings.update({"args": args})%}
+
+    {%- set argslist = [] %}
+    {%- for k, v in args.items() %}
+      {%- do argslist.append("-" ~ k ~ " " ~ v) %}
+    {%- endfor %}
+    {%- do format.update({"args": " ".join(arglist)}) %}
+  {%- endif %}
+
+  {%- if settings.get("environment", False) %}
+    {%- set environment = {} %}
+    {%- for k, v in settings["environment"].items() %}
+      {%- do environment.update({k.format(**format): v.format(**format)}) %}
+    {%- endfor %}
+    {%- do settings.update({"environment": environment})%}
+  {%- endif %}
+
+  {%- do settings.update({"exec": settings["exec"].format(**format) }) %}
+  {%- do settings.update({"name": settings["name"].format(**format) }) %}
+  {%- do settings.update({"template": settings.get("template", defaults["service"]["template"]).format(**format) }) %}
+{%- endmacro %}
+
+
+{%- macro service(settings, shared ) %}
+  {{ _executable(settings, prefix) }}
+  {{ _service(settings, prefix) }}
+{%- endmacro %}

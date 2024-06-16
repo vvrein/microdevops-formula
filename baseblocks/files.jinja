@@ -1,0 +1,13 @@
+  {# patch files for file manager #}
+  {%- set files = data.get("files", {}) %}
+  {%- for kind, block in files.items() %}
+    {%- for name, items in block.items() %}
+      {%- for item in items %}
+        {%- if "name" in item %}
+          {%- do item.update({"name": item["name"].format(**format_base)}) %}
+        {%- endif %}
+      {%- endfor %}
+    {%- endfor %}
+  {%- endfor %}
+  {%- set extloop = name %}
+  {%- include "_include/file_manager/init.sls" %}

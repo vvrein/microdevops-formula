@@ -1,0 +1,17 @@
+salt_cache_dir: /var/cache/salt
+
+order:
+  - user
+  - install_dir
+  - download
+  - untar
+  - move
+  - venv
+  - docker_extract
+  - service
+
+
+baseblocks:
+  fallback:
+    defaults:
+      install_dir: "/opt/{type}/{name}"
